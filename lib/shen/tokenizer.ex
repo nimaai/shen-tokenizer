@@ -6,7 +6,7 @@ defmodule Shen.Tokenizer do
     Process.register(buffer, :buffer)
     drain_whitespace(io_device)
     c = getc(io_device)
-    unless eof?(c) do
+    token = unless eof?(c) do
       case c do
         "(" -> "["
         ")" -> "]"
@@ -15,6 +15,7 @@ defmodule Shen.Tokenizer do
       end
     end
     Process.unregister(:buffer)
+    token
   end
 
   defp pop(buffer) do
@@ -26,11 +27,11 @@ defmodule Shen.Tokenizer do
   end
 
   defp eof?(c) do
-    Agent.get(:buffer, &empty?/1) || c == :eof
+    Agent.get(:buffer, &empty?/1) && c == :eof
   end
 
   defp getc(io_device) do
-    if c = Agent.get_and_update(:buffer, &pop/1)
+    if c = Agent.get_and_update(:buffer, &pop/1) do
       c
     else
       IO.read(io_device, 1)
@@ -43,7 +44,7 @@ defmodule Shen.Tokenizer do
 
   defp consume_string(io_device, list_of_chars) do
     c = getc(io_device)
-    if eof?(c) do: raise "unterminated string"
+    if eof?(c), do: raise "unterminated string"
     case c do
       "\"" -> Enum.join(list_of_chars)
       _ -> consume_string(io_device, list_of_chars ++ [c])

@@ -2,11 +2,13 @@ defmodule Shen.TokenizerTest do
   use ExUnit.Case
   alias Shen.Tokenizer
 
-  test "tokenizer" do
-    {:ok, io_string} = StringIO.open("(\"foo\"   \"bar\")")
-    assert Tokenizer.next(io_string) == "["
-    assert Tokenizer.next(io_string) == "foo"
-    assert Tokenizer.next(io_string) == "bar"
-    assert Tokenizer.next(io_string) == "]"
+  test "drain whitespace" do
+    {:ok, io_string} = StringIO.open("  \n\r (\"foo\"   \"bar\"\t) \n")
+    {:ok, buffer} = Agent.start_link(fn -> [] end)
+    assert Tokenizer.next(io_string, buffer) == "["
+    assert Tokenizer.next(io_string, buffer) == "foo"
+    assert Tokenizer.next(io_string, buffer) == "bar"
+    assert Tokenizer.next(io_string, buffer) == "]"
+    Agent.stop(buffer)
   end
 end
