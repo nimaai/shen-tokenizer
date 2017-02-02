@@ -61,4 +61,57 @@ defmodule Shen.Tokenizer do
       end
     end
   end
+
+  defp unget_chars(list_of_chars) do
+    Enum.reverse(list_of_chars) |> Enum.each(fn c -> ungetc(c) end)
+  end
+
+  defp consume_number_or_symbol(io_device) do
+    # First drain optional leading signs
+    # Then drain optional decimal point
+    # If there is another character and it is a digit, then it
+    # is a number. Otherwise it is a symbol.
+
+    chars = drain_leading_signs(io_device, [])
+    c = getc(io_device)
+    if eof?(c) do
+      unget_chars(chars)
+      consume_symbol
+    else
+      chars = chars ++ [c]
+      if c == "." do
+        c = getc(io_device)
+        if eof?(c) do
+          unget_chars(chars)
+          consume_symbol
+        else
+          chars = chars ++ [c]
+          unget_chars(chars)
+          if Regex.match?(~r/\d/, c) do
+            consume_number(io_device)
+          else
+            consume_symbol(io_device)
+          end
+        end
+      else
+        unget_chars(chars)
+        if Regex.match?(~r/\d/, c) do
+          consume_number(io_device)
+        else
+          consume_symbol(io_device)
+        end
+      end
+    end
+  end
+
+  defp drain_leading_signs(io_device, list_of_chars) do
+    c = getc(io_device)
+    if eof?(c), do: list_of_chars
+    unless Regex.match?(~r/[-+]/, c) do
+      ungetc(c)
+      list_of_chars
+    else
+      drain_leading_signs(io_device, list_of_chars ++ [c])
+    end
+  end
 end
