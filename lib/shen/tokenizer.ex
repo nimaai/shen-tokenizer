@@ -1,22 +1,21 @@
 defmodule Shen.Tokenizer do
-   @symbol_chars ~r/[-=*\/+_?$!\@~><&%'#`;:{}a-zA-Z0-9.]/
-  # require IEx
+  @symbol_chars ~r/[-=*\/+_?$!\@~><&%'#`;:{}a-zA-Z0-9.]/
+  require IEx
 
   def next(io_device, buffer) do
     Process.register(buffer, :buffer)
-    Agent.start_link(fn -> io_device end, name: :io_device)
-    drain_whitespace()
-    c = getc()
+    drain_whitespace(io_device)
+    c = getc(io_device)
     token = unless eof?(c) do
-      case c do
-        "(" -> "["
-        ")" -> "]"
-        "\"" -> consume_string()
-        _  -> c
+      cond do
+        c == "(" -> "["
+        c == ")" -> "]"
+        c == "\"" -> consume_string(io_device)
+        Regex.match?(@symbol_chars, c) -> consume_number_or_symbol(io_device)
+        true -> c
       end
     end
     Process.unregister(:buffer)
-    Agent.stop(:io_device)
     token
   end
 
@@ -32,11 +31,11 @@ defmodule Shen.Tokenizer do
     Agent.get(:buffer, &empty?/1) && c == :eof
   end
 
-  defp getc() do
+  defp getc(io_device) do
     if c = Agent.get_and_update(:buffer, &pop/1) do
       c
     else
-      Agent.get(:io_device, fn io_device -> IO.read(io_device, 1) end)
+      IO.read(io_device, 1)
     end
   end
 
@@ -44,20 +43,20 @@ defmodule Shen.Tokenizer do
     Agent.update(:buffer, fn buffer -> [c | buffer] end)
   end
 
-  defp consume_string(list_of_chars \\ []) do
-    c = getc()
+  defp consume_string(io_device, list_of_chars \\ []) do
+    c = getc(io_device)
     if eof?(c), do: raise "unterminated string"
     case c do
       "\"" -> Enum.join(list_of_chars)
-      _ -> consume_string(list_of_chars ++ [c])
+      _ -> consume_string(io_device, list_of_chars ++ [c])
     end
   end
 
-  defp drain_whitespace() do
-    c = getc()
+  defp drain_whitespace(io_device) do
+    c = getc(io_device)
     unless eof?(c) do
       if Regex.match?(~r/\s/, c) do
-        drain_whitespace()
+        drain_whitespace(io_device)
       else
         ungetc(c)
       end
@@ -78,14 +77,14 @@ defmodule Shen.Tokenizer do
     c = getc(io_device)
     if eof?(c) do
       unget_chars(chars)
-      consume_symbol
+      consume_symbol(io_device)
     else
       chars = chars ++ [c]
       if c == "." do
         c = getc(io_device)
         if eof?(c) do
           unget_chars(chars)
-          consume_symbol
+          consume_symbol(io_device)
         else
           chars = chars ++ [c]
           unget_chars(chars)
@@ -106,6 +105,9 @@ defmodule Shen.Tokenizer do
     end
   end
 
+  defp consume_number(io_device) do
+  end
+
   defp consume_symbol(io_device) do
     chars = get_symbol_chars(io_device, [])
     str = Enum.join(chars)
@@ -122,7 +124,7 @@ defmodule Shen.Tokenizer do
       eof?(c) ->
         list_of_chars
       not Regex.match?(@symbol_chars, c) ->
-        unget(c)
+        ungetc(c)
         list_of_chars
       true ->
         get_symbol_chars(io_device, list_of_chars ++ [c])
