@@ -34,16 +34,17 @@ defmodule Shen.TokenizerTest do
       assert Tokenizer.next(io_string, context[:buffer]) == :"--+-"
     end
 
-    # it 'reads double decimal points followed by digits as symbols' do
-    #   expect(lexer('..77').next).to eq('..77'.to_sym)
-    # end
+    test "reads double decimal points followed by digits as symbols", context do
+      io_string = open_io_string("..77")
+      assert Tokenizer.next(io_string, context[:buffer]) == :"..77"
+    end
 
-    # it "accepts =-*/+_?$!@~><&%'#`;:{} in symbols" do
-    #   all_punctuation = "=-*/+_?$!@~><&%'#`;:{}"
-    #   sym = lexer(all_punctuation).next
-    #   expect(sym).to be_kind_of(Symbol)
-    #   expect(sym.to_s).to eq(all_punctuation)
-    # end
+    test "accepts =-*/+_?$!@~><&%'#`;:{} in symbols", context do
+      all_punctuation = "=-*/+_?$!@~><&%'#`;:{}"
+      atom = Tokenizer.next(open_io_string(all_punctuation), context[:buffer])
+      assert is_atom(atom) == true
+      assert to_string(atom) == all_punctuation
+    end
   end
 
   describe "strings" do

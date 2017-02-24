@@ -11,7 +11,9 @@ defmodule Shen.Tokenizer do
         c == "(" -> "["
         c == ")" -> "]"
         c == "\"" -> consume_string(io_device)
-        Regex.match?(@symbol_chars, c) -> consume_number_or_symbol(io_device)
+        Regex.match?(@symbol_chars, c) ->
+          ungetc(c)
+          consume_number_or_symbol(io_device)
         true -> c
       end
     end
