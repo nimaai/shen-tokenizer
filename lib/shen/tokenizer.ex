@@ -108,12 +108,14 @@ defmodule Shen.Tokenizer do
 
   defp drain_leading_signs(io_device, list_of_chars) do
     c = getc(io_device)
-    if eof?(c), do: list_of_chars
-    unless Regex.match?(~r/[-+]/, c) do
-      ungetc(c)
-      list_of_chars
-    else
-      drain_leading_signs(io_device, list_of_chars ++ [c])
+    cond do
+      eof?(c) ->
+        list_of_chars
+      not Regex.match?(~r/[-+]/, c) ->
+        ungetc(c)
+        list_of_chars
+      true ->
+        drain_leading_signs(io_device, list_of_chars ++ [c])
     end
   end
 end
