@@ -1,5 +1,5 @@
 defmodule Shen.Tokenizer do
-  # @symbol_chars ~r/[-=*\/+_?$!\@~><&%'#`;:{}a-zA-Z0-9.]/
+   @symbol_chars ~r/[-=*\/+_?$!\@~><&%'#`;:{}a-zA-Z0-9.]/
   # require IEx
 
   def next(io_device, buffer) do
@@ -103,6 +103,29 @@ defmodule Shen.Tokenizer do
           consume_symbol(io_device)
         end
       end
+    end
+  end
+
+  defp consume_symbol(io_device) do
+    chars = get_symbol_chars(io_device, [])
+    str = Enum.join(chars)
+    case str do
+      "true" -> true
+      "false" -> false
+      _ -> String.to_atom(str)
+    end
+  end
+
+  defp get_symbol_chars(io_device, list_of_chars) do
+    c = getc(io_device)
+    cond do
+      eof?(c) ->
+        list_of_chars
+      not Regex.match?(@symbol_chars, c) ->
+        unget(c)
+        list_of_chars
+      true ->
+        get_symbol_chars(io_device, list_of_chars ++ [c])
     end
   end
 
