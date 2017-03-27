@@ -111,7 +111,7 @@ defmodule Shen.Tokenizer do
     c = getc(io_device)
     cond do
       eof?(c) ->
-        [list_of_chars, bools]
+        {list_of_chars, bools}
       Regex.match?(~r/\d/, c) ->
         get_number_chars(io_device,
                          list_of_chars ++ [c],
@@ -126,21 +126,24 @@ defmodule Shen.Tokenizer do
                          %{bools | negative: !negative})
       true ->
         ungetc(c)
-        [list_of_chars, bools]
+        {list_of_chars, bools}
     end
   end
 
   defp consume_number(io_device) do
-    [chars, bools] = get_number_chars(io_device,
+    {chars, bools} = get_number_chars(io_device,
                                       [],
                                       %{decimal_seen: false,
                                         negative: false,
                                         past_sign: false})
     if bools.negative, do: chars = ['-'] ++ chars
     if List.last(chars) == '.' do
-      
+      {c, chars2} = List.pop_at(chars, -1)
+      ungetc(c)
+      decimal_seen = false
     end
-
+    str = Enum.join(chars2)
+    if decimal_seen, do: to_float(str), else: to_integer(str)
   end
 
   defp consume_symbol(io_device) do
