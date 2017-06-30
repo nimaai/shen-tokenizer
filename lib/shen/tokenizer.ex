@@ -1,6 +1,7 @@
 defmodule Shen.Tokenizer do
   @symbol_chars ~r/[-=*\/+_?$!\@~><&%'#`;:{}a-zA-Z0-9.]/
   require IEx
+  require Logger
 
   def next(io_device, buffer) do
     Process.register(buffer, :buffer)
@@ -116,14 +117,16 @@ defmodule Shen.Tokenizer do
         get_number_chars(io_device,
                          list_of_chars ++ [c],
                          %{bools | past_sign: true})
-      c == '.' and not bools.decimal_seen ->
+      c == "." and not bools.decimal_seen ->
         get_number_chars(io_device,
                          list_of_chars ++ [c],
                          %{bools | past_sign: true, decimal_seen: true})
-      c == '-' and not bools.past_sign
+      c == "-" and not bools.past_sign ->
         get_number_chars(io_device,
                          list_of_chars,
                          %{bools | negative: !bools.negative})
+      c == "+" ->
+        get_number_chars(io_device, list_of_chars, bools)
       true ->
         ungetc(c)
         {list_of_chars, bools}
@@ -138,12 +141,16 @@ defmodule Shen.Tokenizer do
                                         past_sign: false})
     if bools.negative, do: chars = ['-'] ++ chars
     if List.last(chars) == '.' do
-      {c, chars2} = List.pop_at(chars, -1)
+      {c, chars} = List.pop_at(chars, -1)
       ungetc(c)
-      decimal_seen = false
+      last_decimal_seen = true
     end
-    str = Enum.join(chars2)
-    if decimal_seen, do: String.to_float(str), else: String.to_integer(str)
+    str = Enum.join(chars)
+    if bools.decimal_seen or last_decimal_seen do
+      String.to_float(str)
+    else
+      String.to_integer(str)
+    end
   end
 
   defp consume_symbol(io_device) do

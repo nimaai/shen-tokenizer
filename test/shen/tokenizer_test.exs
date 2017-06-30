@@ -3,6 +3,7 @@ defmodule Shen.TokenizerTest do
   use ExUnit.Callbacks
   alias Shen.Tokenizer
   require IEx
+  require Logger
 
   setup do
     {:ok, buffer} = Agent.start_link(fn -> [] end)
@@ -74,16 +75,19 @@ defmodule Shen.TokenizerTest do
   end
 
   describe "numbers" do
-    # test "reads integers as Fixnums", context do
-    #   io_string = open_io_string("37")
-    #   assert Tokenizer.next(io_string, context[:buffer]) == 37
-    # end
+    test "reads integers as Fixnums", context do
+      io_string = open_io_string("37")
+      num = Tokenizer.next(io_string, context[:buffer])
+      assert is_integer(num)
+      assert num == 37
+    end
 
-    # test "reads floating points as Floats" do
-    #   num = lexer("37.42").next
-    #   expect(num).to be_kind_of(Float)
-    #   expect(num).to eq(37.42)
-    # end
+    test "reads floating points as Floats", context do
+      io_string = open_io_string("37.42")
+      num = Tokenizer.next(io_string, context[:buffer])
+      assert is_float(num)
+      assert num == 37.42
+    end
 
     # test "with an odd number of leading minuses are negative" do
     #   expect(lexer('-1').next).to eq(-1)
@@ -135,6 +139,7 @@ defmodule Shen.TokenizerTest do
     #   expect(l.next).to eq(0.9)
     # end
   end
+
   defp open_io_string(string) do
     {:ok, io_string} = StringIO.open(string)
     io_string
