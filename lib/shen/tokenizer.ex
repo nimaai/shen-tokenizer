@@ -123,7 +123,7 @@ defmodule Shen.Tokenizer do
       c == '-' and not bools.past_sign
         get_number_chars(io_device,
                          list_of_chars,
-                         %{bools | negative: !negative})
+                         %{bools | negative: !bools.negative})
       true ->
         ungetc(c)
         {list_of_chars, bools}
@@ -143,7 +143,7 @@ defmodule Shen.Tokenizer do
       decimal_seen = false
     end
     str = Enum.join(chars2)
-    if decimal_seen, do: to_float(str), else: to_integer(str)
+    if decimal_seen, do: String.to_float(str), else: String.to_integer(str)
   end
 
   defp consume_symbol(io_device) do
