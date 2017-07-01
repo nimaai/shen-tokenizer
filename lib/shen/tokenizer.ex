@@ -3,8 +3,7 @@ defmodule Shen.Tokenizer do
   require IEx
   require Logger
 
-  def next(io_device, buffer) do
-    Process.register(buffer, :buffer)
+  def next(io_device) do
     drain_whitespace(io_device)
     c = getc(io_device)
     token = unless eof?(c) do
@@ -18,7 +17,6 @@ defmodule Shen.Tokenizer do
         true -> c
       end
     end
-    Process.unregister(:buffer)
     token
   end
 
