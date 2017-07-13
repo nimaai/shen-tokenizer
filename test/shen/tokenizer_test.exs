@@ -89,27 +89,37 @@ defmodule Shen.TokenizerTest do
       assert num == 37.42
     end
 
-    # test "with an odd number of leading minuses are negative" do
-    #   expect(lexer('-1').next).to eq(-1)
-    #   expect(lexer('---1').next).to eq(-1)
-    # end
+    test "with an odd number of leading minuses are negative" do
+      io_string = open_io_string("-1")
+      assert Tokenizer.next(io_string) == -1
+      io_string = open_io_string("---1")
+      assert Tokenizer.next(io_string) == -1
+    end
 
-    # test "with an even number of leading minuses are positive" do
-    #   expect(lexer('--1').next).to eq(1)
-    #   expect(lexer('----1').next).to eq(1)
-    # end
+    test "with an even number of leading minuses are positive" do
+      io_string = open_io_string("--1")
+      assert Tokenizer.next(io_string) == 1
+      io_string = open_io_string("----1")
+      assert Tokenizer.next(io_string) == 1
+    end
 
-    # test "with leading + does not change sign" do
-    #   expect(lexer('+-1').next).to eq(-1)
-    #   expect(lexer('-+--1').next).to eq(-1)
-    #   expect(lexer('-+-+1').next).to eq(1)
-    #   expect(lexer('+-+-+-+-+1').next).to eq(1)
-    # end
+    test "with leading + does not change sign" do
+      io_string = open_io_string("+-1")
+      assert Tokenizer.next(io_string) == -1
+      io_string = open_io_string("-+--1")
+      assert Tokenizer.next(io_string) == -1
+      io_string = open_io_string("-+-+1")
+      assert Tokenizer.next(io_string) == 1
+      io_string = open_io_string("+-+-+-+-+1")
+      assert Tokenizer.next(io_string) == 1
+    end
 
-    # test "allows leading decimal points" do
-    #   expect(lexer('.9').next).to eq(0.9)
-    #   expect(lexer('-.9').next).to eq(-0.9)
-    # end
+    test "allows leading decimal points" do
+      io_string = open_io_string(".9")
+      assert Tokenizer.next(io_string) == 0.9
+      io_string = open_io_string("-.9")
+      assert Tokenizer.next(io_string) == -0.9
+    end
 
     # test "treats a trailing decimal followed by EOF as a symbol" do
     #   l = lexer('7.')
