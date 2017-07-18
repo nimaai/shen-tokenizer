@@ -138,13 +138,13 @@ defmodule Shen.Tokenizer do
                                         negative: false,
                                         past_sign: false})
     chars = if bools.negative do
-      ['-'] ++ chars
+      ["-"] ++ chars
     else
       chars
     end
 
     {last_decimal_seen, chars} = \
-      if List.last(chars) == '.' do
+      if List.last(chars) == "." do
         {c, cs} = List.pop_at(chars, -1)
         ungetc(c)
         {true, cs}
@@ -153,7 +153,7 @@ defmodule Shen.Tokenizer do
       end
 
     str = Enum.join(chars)
-    if bools.decimal_seen or last_decimal_seen do
+    if bools.decimal_seen and not last_decimal_seen do
       String.to_float(sanitize_float(str))
     else
       String.to_integer(str)

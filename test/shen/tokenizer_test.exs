@@ -49,9 +49,13 @@ defmodule Shen.TokenizerTest do
   end
 
   describe "strings" do
-    test "unterminated" do
-      io_string = open_io_string("\"foo\" \"bar  baz")
+    test "reads double-quoted strings" do
+      io_string = open_io_string("\"foo\"")
       assert Tokenizer.next(io_string) == "foo"
+    end
+
+    test "unterminated" do
+      io_string = open_io_string("\"bar  baz")
       assert_raise RuntimeError, "unterminated string", fn ->
         Tokenizer.next(io_string)
       end
@@ -121,33 +125,35 @@ defmodule Shen.TokenizerTest do
       assert Tokenizer.next(io_string) == -0.9
     end
 
-    # test "treats a trailing decimal followed by EOF as a symbol" do
-    #   l = lexer('7.')
-    #   num = l.next
-    #   expect(num).to be_kind_of(Fixnum)
-    #   expect(num).to eq(7)
+    test "treats a trailing decimal followed by EOF as a symbol" do
+      io_string = open_io_string("7.")
+      num = Tokenizer.next(io_string)
+      assert is_integer(num)
+      assert num == 7
 
-    #   sym = l.next
-    #   expect(sym).to be_kind_of(Symbol)
-    #   expect(sym.to_s).to eq('.')
-    # end
+      sym = Tokenizer.next(io_string)
+      assert is_atom(sym)
+      assert sym == :.
+    end
 
-    # test "treats a trailing decimal followed by non-digit as a symbol" do
-    #   l = lexer('7.a')
-    #   num = l.next
-    #   expect(num).to be_kind_of(Fixnum)
-    #   expect(num).to eq(7)
+    test "treats a trailing decimal followed by non-digit as a symbol" do
+      io_string = open_io_string("7.a")
+      num = Tokenizer.next(io_string)
+      assert is_integer(num)
+      assert num == 7
 
-    #   sym = l.next
-    #   expect(sym).to be_kind_of(Symbol)
-    #   expect(sym.to_s).to eq('.a')
-    # end
+      sym = Tokenizer.next(io_string)
+      assert is_atom(sym)
+      assert sym == :".a"
+    end
 
-    # test "handles multiple decimal points like shen does" do
-    #   l = lexer('7.8.9')
-    #   expect(l.next).to eq(7.8)
-    #   expect(l.next).to eq(0.9)
-    # end
+    test "handles multiple decimal points like shen does" do
+      io_string = open_io_string("7.8.9")
+      num = Tokenizer.next(io_string)
+      assert num == 7.8
+      num = Tokenizer.next(io_string)
+      assert num == 0.9
+    end
   end
 
   defp open_io_string(string) do
