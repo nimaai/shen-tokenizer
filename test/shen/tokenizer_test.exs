@@ -1,13 +1,10 @@
 defmodule Shen.TokenizerTest do
   use ExUnit.Case
-  use ExUnit.Callbacks
   alias Shen.Tokenizer
-  require IEx
-  require Logger
 
   setup do
-    {state, _} = Agent.start_link(fn -> [] end, name: :buffer)
-    state
+    {:ok, _} = Agent.start_link(fn -> [] end, name: :buffer)
+    :ok
   end
 
   describe "whitespace" do
