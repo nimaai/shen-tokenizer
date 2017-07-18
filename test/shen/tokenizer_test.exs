@@ -156,6 +156,20 @@ defmodule Shen.TokenizerTest do
     end
   end
 
+  test 'works with these all together' do
+    io_string = open_io_string("(12 quick m-*$ RAN `fast\' -.7) \"oh 12 yeah!\"  ")
+    assert Tokenizer.next(io_string) == "["
+    assert Tokenizer.next(io_string) == 12
+    assert Tokenizer.next(io_string) == :quick
+    assert Tokenizer.next(io_string) == :"m-*$"
+    assert Tokenizer.next(io_string) == :RAN
+    assert Tokenizer.next(io_string) == :"`fast'"
+    assert Tokenizer.next(io_string) == -0.7
+    assert Tokenizer.next(io_string) == "]"
+    assert Tokenizer.next(io_string) == "oh 12 yeah!"
+    assert Tokenizer.next(io_string) == nil
+  end
+
   defp open_io_string(string) do
     {:ok, io_string} = StringIO.open(string)
     io_string
